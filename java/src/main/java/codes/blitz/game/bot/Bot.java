@@ -77,7 +77,7 @@ public class Bot {
         List<RadarStation> operatedRadarStations = new ArrayList<>(myShip.stations().radars());
         operatedRadarStations.removeIf(radarStation -> radarStation.operator() == null);
         for (RadarStation radarStation : operatedRadarStations) {
-            actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(new Random().nextInt(otherShipsIds.size()))));
+            actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(0)));
         }
         List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
         repareShield(gameMessage, Crewmates, actions, myShip);
