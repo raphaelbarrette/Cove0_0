@@ -1,8 +1,6 @@
 package codes.blitz.game.bot;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import codes.blitz.game.message.game.*;
 import codes.blitz.game.message.game.actions.*;
@@ -25,6 +23,8 @@ public class Bot {
         // Find who's not doing anything and try to give them a job.
         List<Crewmate> idleCrewmates = new ArrayList<>(myShip.crew());
         idleCrewmates.removeIf(crewmate -> crewmate.currentStation() != null || crewmate.destination() != null);
+        Map<String, String> crewmateLocations = new HashMap<>();
+
 
         for (Crewmate crewmate : idleCrewmates) {
             List<StationDistance> visitableStations = new ArrayList<>();
@@ -33,30 +33,41 @@ public class Bot {
             visitableStations.addAll(crewmate.distanceFromStations().helms());
             visitableStations.addAll(crewmate.distanceFromStations().radars());
 
-            StationDistance stationToMoveTo = visitableStations.get(new Random().nextInt(visitableStations.size()));
-            
-            actions.add(new MoveCrewAction(crewmate.id(), stationToMoveTo.stationPosition()));
+            //visitableStations.sort(Comparator.comparingInt(visitableStations.distance()));
+
+
+            for (StationDistance station : visitableStations) {
+                if (!crewmateLocations.containsKey(station.stationId())) {
+                    actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
+                    crewmateLocations.put(station.stationId(), crewmate.id());
+                    break;
+                }
+            }
+            //StationDistance stationToMoveTo = visitableStations.get(new Random().nextInt(visitableStations.size()));
+
         }
 
         // Now crew members at stations should do something!
         List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
         operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
         for (TurretStation turretStation : operatedTurretStations) {
-            int switchAction = new Random().nextInt(3);
-            switch (switchAction) {
-                case 0:
-                    // Charge the turret
-                    actions.add(new TurretChargeAction(turretStation.id()));
-                    break;
-                case 1:
-                    // Aim at the turret itself
-                    actions.add(new TurretLookAtAction(turretStation.id(), new Vector(gameMessage.constants().world().width() * Math.random(), gameMessage.constants().world().width() * Math.random())));
-                    break;
-                case 2:
-                    // Shoot!
-                    actions.add(new TurretShootAction(turretStation.id()));
-                    break;
-            }
+//            int switchAction = new Random().nextInt(3);
+//            switch (switchAction) {
+//                case 0:
+//                    // Charge the turret
+//                    actions.add(new TurretChargeAction(turretStation.id()));
+//                    break;
+//                case 1:
+//                    // Aim at the turret itself
+//                    actions.add(new TurretLookAtAction(turretStation.id(), new Vector(gameMessage.constants().world().width() * Math.random(), gameMessage.constants().world().width() * Math.random())));
+//                    break;
+//                case 2:
+//                    // Shoot!
+//                    actions.add(new TurretShootAction(turretStation.id()));
+//                    break;
+//            }
+            actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(0)).toVector()));
+            actions.add(new TurretShootAction(turretStation.id()));
         }
 
         List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
