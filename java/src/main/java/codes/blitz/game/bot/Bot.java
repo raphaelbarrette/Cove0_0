@@ -70,8 +70,33 @@ public class Bot {
         for (RadarStation radarStation : operatedRadarStations) {
             actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(new Random().nextInt(otherShipsIds.size()))));
         }
-
+        List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
+        repareShield(gameMessage, Crewmates, actions, myShip);
         // You can clearly do better than the random actions above. Have fun!!
         return actions;
     }
+    
+    public void repareShield(GameMessage gameMessage, List<Crewmate> crewmateList, List<Action> actions, Ship myShip) {
+        int shortestDistance = 1000000;
+        StationDistance stationToMoveTo = null;
+        Crewmate crewToMove = null;
+        System.out.println("shield health is " + myShip.currentShield());
+        if (myShip.currentShield() <= 0) {
+            for (Crewmate crewmate : crewmateList) {
+                for (StationDistance stationDistance : crewmate.distanceFromStations().shields()) {
+                    if (stationDistance.distance() < shortestDistance) {
+                        stationToMoveTo = stationDistance;
+                        crewToMove = crewmate;
+                        System.out.println("Moving crewmate to shield to shield station" + crewToMove.id() + " : " + stationToMoveTo.stationPosition() + "because health is less than 0");
+                    }
+                }
+            }
+            actions.add(new MoveCrewAction(crewToMove.id(), stationToMoveTo.stationPosition()));
+        }
+
+        if (myShip.currentShield() >= 150) {
+            // ICI KEVIN
+        }
+    }
+    
 }
