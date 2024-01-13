@@ -28,9 +28,7 @@ public class Bot {
 
         for (Crewmate crewmate : idleCrewmates) {
             List<StationDistance> visitableStations = new ArrayList<>();
-            visitableStations.addAll(crewmate.distanceFromStations().shields());
             visitableStations.addAll(crewmate.distanceFromStations().turrets());
-            visitableStations.addAll(crewmate.distanceFromStations().helms());
             visitableStations.addAll(crewmate.distanceFromStations().radars());
 
             //visitableStations.sort(Comparator.comparingInt(visitableStations.distance()));
