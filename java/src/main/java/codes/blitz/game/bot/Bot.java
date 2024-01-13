@@ -10,6 +10,8 @@ public class Bot {
         System.out.println("Initializing your super duper mega bot.");
     }
 
+    private boolean helmOperated = false;
+
     /*
      * Here is where the magic happens. I bet you can do better ;)
      */
@@ -20,48 +22,99 @@ public class Bot {
         List<String> otherShipsIds = new ArrayList<>(gameMessage.shipsPositions().keySet());
         otherShipsIds.removeIf(shipId -> shipId == gameMessage.currentTeamId());
 
-        // Find who's not doing anything and try to give them a job.
-        List<Crewmate> idleCrewmates = new ArrayList<>(myShip.crew());
-        idleCrewmates.removeIf(crewmate -> crewmate.currentStation() != null || crewmate.destination() != null);
-        Map<String, String> crewmateLocations = new HashMap<>();
+        if (otherShipsIds.size() <= 1) {
+            // Find who's not doing anything and try to give them a job.
+            List<Crewmate> idleCrewmates = new ArrayList<>(myShip.crew());
+            idleCrewmates.removeIf(crewmate -> crewmate.currentStation() != null || crewmate.destination() != null);
+            Map<String, String> crewmateLocations = new HashMap<>();
 
 
-        for (Crewmate crewmate : idleCrewmates) {
-            List<StationDistance> visitableStations = new ArrayList<>();
-            visitableStations.addAll(crewmate.distanceFromStations().turrets());
-            visitableStations.addAll(crewmate.distanceFromStations().radars());
+            for (Crewmate crewmate : idleCrewmates) {
+                List<StationDistance> visitableStations = new ArrayList<>();
+                visitableStations.addAll(crewmate.distanceFromStations().turrets());
+                visitableStations.addAll(crewmate.distanceFromStations().radars());
 
-            for (StationDistance station : visitableStations) {
-                if (!crewmateLocations.containsKey(station.stationId())) {
-                    actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
-                    crewmateLocations.put(station.stationId(), crewmate.id());
-                    break;
+                for (StationDistance station : visitableStations) {
+                    if (!crewmateLocations.containsKey(station.stationId())) {
+                        actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
+                        crewmateLocations.put(station.stationId(), crewmate.id());
+                        break;
+                    }
                 }
             }
+
+            // Now crew members at stations should do something!
+            List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
+            operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
+            for (TurretStation turretStation : operatedTurretStations) {
+                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
+                actions.add(new TurretShootAction(turretStation.id()));
+            }
+
+            List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
+            operatedHelmStation.removeIf(helmStation -> helmStation.operator() == null);
+            for (HelmStation helmStation : operatedHelmStation) {
+                actions.add(new RotateShipAction(360 * Math.random()));
+            }
+
+            List<RadarStation> operatedRadarStations = new ArrayList<>(myShip.stations().radars());
+            operatedRadarStations.removeIf(radarStation -> radarStation.operator() == null);
+            for (RadarStation radarStation : operatedRadarStations) {
+                actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(0)));
+            }
+            List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
+            repareShield(gameMessage, Crewmates, actions, myShip, crewmateLocations);
+            // You can clearly do better than the random actions above. Have fun!!
+            return actions;
+        } else {
+            List<Crewmate> idleCrewmates = new ArrayList<>(myShip.crew());
+            idleCrewmates.removeIf(crewmate -> crewmate.currentStation() != null || crewmate.destination() != null);
+            Map<String, String> crewmateLocations = new HashMap<>();
+
+
+            for (Crewmate crewmate : idleCrewmates) {
+                List<StationDistance> visitableStations = new ArrayList<>();
+                visitableStations.addAll(crewmate.distanceFromStations().turrets());
+                visitableStations.addAll(crewmate.distanceFromStations().radars());
+
+
+                for (StationDistance station : visitableStations) {
+                    if (!crewmateLocations.containsKey(station.stationId())) {
+                        if (!this.helmOperated) {
+                            actions.add(new MoveCrewAction(crewmate.id(), crewmate.distanceFromStations().helms().stationPosition()));
+                        }
+                        actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
+                        crewmateLocations.put(station.stationId(), crewmate.id());
+                        break;
+                    }
+                }
+            }
+
+            // Now crew members at stations should do something!
+            List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
+            operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
+            for (TurretStation turretStation : operatedTurretStations) {
+                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
+                actions.add(new TurretShootAction(turretStation.id()));
+            }
+
+            List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
+            operatedHelmStation.removeIf(helmStation -> helmStation.operator() == null);
+            for (HelmStation helmStation : operatedHelmStation) {
+                actions.add(new RotateShipAction(360 * Math.random()));
+            }
+
+            List<RadarStation> operatedRadarStations = new ArrayList<>(myShip.stations().radars());
+            operatedRadarStations.removeIf(radarStation -> radarStation.operator() == null);
+            for (RadarStation radarStation : operatedRadarStations) {
+                actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(0)));
+            }
+            List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
+            repareShield(gameMessage, Crewmates, actions, myShip, crewmateLocations);
+
         }
 
-        // Now crew members at stations should do something!
-        List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
-        operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
-        for (TurretStation turretStation : operatedTurretStations) {
-            actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
-            actions.add(new TurretShootAction(turretStation.id()));
-        }
 
-        List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
-        operatedHelmStation.removeIf(helmStation -> helmStation.operator() == null);
-        for (HelmStation helmStation : operatedHelmStation) {
-            actions.add(new RotateShipAction(360 * Math.random()));
-        }
-
-        List<RadarStation> operatedRadarStations = new ArrayList<>(myShip.stations().radars());
-        operatedRadarStations.removeIf(radarStation -> radarStation.operator() == null);
-        for (RadarStation radarStation : operatedRadarStations) {
-            actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(0)));
-        }
-        List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
-        repareShield(gameMessage, Crewmates, actions, myShip, crewmateLocations);
-        // You can clearly do better than the random actions above. Have fun!!
         return actions;
     }
     
