@@ -80,17 +80,17 @@ public class Bot {
             actions.add(new RadarScanAction(radarStation.id(), otherShipsIds.get(0)));
         }
         List<Crewmate> Crewmates = new ArrayList<>(myShip.crew());
-        repareShield(gameMessage, Crewmates, actions, myShip);
+        repareShield(gameMessage, Crewmates, actions, myShip, crewmateLocations);
         // You can clearly do better than the random actions above. Have fun!!
         return actions;
     }
     
-    public void repareShield(GameMessage gameMessage, List<Crewmate> crewmateList, List<Action> actions, Ship myShip) {
+    public void repareShield(GameMessage gameMessage, List<Crewmate> crewmateList, List<Action> actions, Ship myShip, Map<String, String> crewmateLocations) {
         int shortestDistance = 1000000;
         StationDistance stationToMoveTo = null;
         Crewmate crewToMove = null;
         System.out.println("shield health is " + myShip.currentShield());
-        if (myShip.currentShield() <= 0) {
+        if (myShip.currentShield() <= 10) {
             for (Crewmate crewmate : crewmateList) {
                 for (StationDistance stationDistance : crewmate.distanceFromStations().shields()) {
                     if (stationDistance.distance() < shortestDistance) {
@@ -101,10 +101,26 @@ public class Bot {
                 }
             }
             actions.add(new MoveCrewAction(crewToMove.id(), stationToMoveTo.stationPosition()));
+            System.out.println("Current station is " + crewToMove.currentStation());
         }
 
         if (myShip.currentShield() >= 150) {
             // ICI KEVIN
+            for (Crewmate crewmate : crewmateList) {
+                if (Objects.equals(crewmate.currentStation(), "10758")) {
+                    List<StationDistance> visitableStations = new ArrayList<>();
+                    visitableStations.addAll(crewmate.distanceFromStations().turrets());
+
+
+                    for (StationDistance station : visitableStations) {
+                        if (!crewmateLocations.containsKey(station.stationId())) {
+                            actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
+                            crewmateLocations.put(station.stationId(), crewmate.id());
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
     
