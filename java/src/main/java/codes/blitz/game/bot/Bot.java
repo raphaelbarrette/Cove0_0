@@ -44,16 +44,8 @@ public class Bot {
         List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
         operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
         for (TurretStation turretStation : operatedTurretStations) {
-            if (gameMessage.currentTickNumber() < 800) {
-                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(0)).toVector()));
-                actions.add(new TurretShootAction(turretStation.id()));
-            } else if (gameMessage.currentTickNumber() > 800 && gameMessage.currentTickNumber() < 1600) {
-                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
-                actions.add(new TurretShootAction(turretStation.id()));
-            } else if (gameMessage.currentTickNumber() > 1600) {
-                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
-                actions.add(new TurretShootAction(turretStation.id()));
-            }
+            actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
+            actions.add(new TurretShootAction(turretStation.id()));
         }
 
         List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
