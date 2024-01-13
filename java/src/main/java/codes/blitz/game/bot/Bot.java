@@ -31,9 +31,6 @@ public class Bot {
             visitableStations.addAll(crewmate.distanceFromStations().turrets());
             visitableStations.addAll(crewmate.distanceFromStations().radars());
 
-            //visitableStations.sort(Comparator.comparingInt(visitableStations.distance()));
-
-
             for (StationDistance station : visitableStations) {
                 if (!crewmateLocations.containsKey(station.stationId())) {
                     actions.add(new MoveCrewAction(crewmate.id(), station.stationPosition()));
@@ -41,31 +38,22 @@ public class Bot {
                     break;
                 }
             }
-            //StationDistance stationToMoveTo = visitableStations.get(new Random().nextInt(visitableStations.size()));
-
         }
 
         // Now crew members at stations should do something!
         List<TurretStation> operatedTurretStations = new ArrayList<>(myShip.stations().turrets());
         operatedTurretStations.removeIf(turretStation -> turretStation.operator() == null);
         for (TurretStation turretStation : operatedTurretStations) {
-//            int switchAction = new Random().nextInt(3);
-//            switch (switchAction) {
-//                case 0:
-//                    // Charge the turret
-//                    actions.add(new TurretChargeAction(turretStation.id()));
-//                    break;
-//                case 1:
-//                    // Aim at the turret itself
-//                    actions.add(new TurretLookAtAction(turretStation.id(), new Vector(gameMessage.constants().world().width() * Math.random(), gameMessage.constants().world().width() * Math.random())));
-//                    break;
-//                case 2:
-//                    // Shoot!
-//                    actions.add(new TurretShootAction(turretStation.id()));
-//                    break;
-//            }
-            actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(0)).toVector()));
-            actions.add(new TurretShootAction(turretStation.id()));
+            if (gameMessage.currentTickNumber() < 800) {
+                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(0)).toVector()));
+                actions.add(new TurretShootAction(turretStation.id()));
+            } else if (gameMessage.currentTickNumber() > 800 && gameMessage.currentTickNumber() < 1600) {
+                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
+                actions.add(new TurretShootAction(turretStation.id()));
+            } else if (gameMessage.currentTickNumber() > 1600) {
+                actions.add(new TurretLookAtAction(turretStation.id(), gameMessage.shipsPositions().get(otherShipsIds.get(1)).toVector()));
+                actions.add(new TurretShootAction(turretStation.id()));
+            }
         }
 
         List<HelmStation> operatedHelmStation = new ArrayList<>(myShip.stations().helms());
@@ -103,7 +91,7 @@ public class Bot {
             actions.add(new MoveCrewAction(crewToMove.id(), stationToMoveTo.stationPosition()));
             System.out.println("Current station is " + crewToMove.currentStation());
         }
-
+      
         if (myShip.currentShield() >= 150) {
             // ICI KEVIN
             for (Crewmate crewmate : crewmateList) {
@@ -123,5 +111,5 @@ public class Bot {
             }
         }
     }
-    
+
 }
